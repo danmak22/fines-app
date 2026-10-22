@@ -272,3 +272,23 @@ $$;
 
 grant execute on function public.fm_get_archived(text)
 to anon, authenticated;
+
+-- ----------------------------------------
+-- Delete a fine (Fine Master only)
+-- ----------------------------------------
+
+create or replace function public.fm_delete_fine(
+  p_pin text, p_id bigint)
+returns void
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  perform _require_pin(p_pin);
+  delete from fines where id = p_id;
+end;
+$$;
+
+grant execute on function
+  public.fm_delete_fine(text, bigint)
+to anon, authenticated;

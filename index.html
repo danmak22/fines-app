@@ -11,6 +11,18 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Gym Fines">
+<!-- Link preview (WhatsApp etc.). The image URL must be absolute. -->
+<meta name="description" content="Dob someone in. Keep it secret.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Gym Fines">
+<meta property="og:title" content="🍻 Gym Fines">
+<meta property="og:description" content="Dob someone in. Keep it secret.">
+<meta property="og:url" content="https://gym-fines.morningclass.workers.dev/">
+<meta property="og:image" content="https://gym-fines.morningclass.workers.dev/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <!-- supabase-js 2.45.4, served from this repo (jsDelivr fails on some mobile networks) -->
 <script src="vendor/supabase.js"></script>
 <style>
@@ -53,6 +65,7 @@
   .orange { background: var(--orange); }
   .green { background: var(--green); }
   .ghost { background: #fff; color: var(--ink); }
+  .danger { background: #fff; color: #c0002e; margin-left: 8px; }
   .small { padding: 10px 14px; font-size: 1rem; }
   .back { background: transparent; color: var(--ink); box-shadow: none; padding: 8px 0; font-size: 1.1rem; }
 
@@ -514,6 +527,7 @@ function renderFines() {
           <button class="small ${f.done ? 'ghost' : 'green'}" onclick="setDone(${f.id}, ${!f.done})">
             ${f.done ? 'Undo' : 'Mark done'}
           </button>
+          <button class="small danger" onclick="deleteFine(${f.id})">🗑 Delete</button>
         </div>`).join('')}
     </div>`).join('');
 }
@@ -523,6 +537,16 @@ async function setDone(id, done) {
   if (error) { alert(error.message); return; }
   const f = fines.find((x) => x.id === id);
   if (f) f.done = done;
+  renderFines();
+}
+
+async function deleteFine(id) {
+  const f = fines.find((x) => x.id === id);
+  if (!f || !confirm(`Delete this fine against ${f.fined}?\n\n"${f.description}"\n\nThis can't be undone.`)) return;
+  const { error } = await fmCall('fm_delete_fine', { p_id: id });
+  if (error) { alert(error.message); return; }
+  fines = fines.filter((x) => x.id !== id);
+  readout = readout.filter((x) => x.id !== id);
   renderFines();
 }
 

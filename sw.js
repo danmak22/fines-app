@@ -1,7 +1,7 @@
 // Service worker: keeps a copy of the app on the phone so it opens
 // with no signal. Data calls (/rest/...) are never cached here.
 
-const CACHE = 'fines-shell-v3';
+const CACHE = 'fines-shell-v4';
 const SHELL = [
   './',
   'index.html',
