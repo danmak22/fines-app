@@ -250,7 +250,9 @@
 
 <script>
 // ===== CONFIG: paste your Supabase project details here =====
-const SUPABASE_URL = 'https://axjmiczdhpwzjocrmkdy.supabase.co';
+// Cloudflare Worker that forwards to https://axjmiczdhpwzjocrmkdy.supabase.co
+// (worker/supabase-proxy.js), for networks that block *.supabase.co.
+const SUPABASE_URL = 'https://fines-proxy.danielmakings.workers.dev';
 const SUPABASE_ANON_KEY = 'sb_publishable_HdX5meaO2HuWt4bnMgLcYg_dQy3c4m7';
 // ============================================================
 
