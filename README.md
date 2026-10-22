@@ -11,6 +11,10 @@ Fine details are private. That is enforced in the database with Row Level Securi
 
 - `index.html` is the whole app (HTML/CSS/vanilla JS + supabase-js from a CDN).
 - `schema.sql` holds the tables, RLS policies and functions.
+- `sw.js`, `manifest.webmanifest`, `icons/` make the app installable and usable offline.
+- `vendor/supabase.js` is supabase-js 2.45.4, served from the repo instead of a CDN.
+- `worker/app.js` + `wrangler.jsonc` host the whole app on Cloudflare.
+- `worker/supabase-proxy.js` is the `fines-proxy` Worker the GitHub Pages copy uses to reach Supabase.
 
 ## Setup
 
@@ -39,7 +43,23 @@ Fine details are private. That is enforced in the database with Row Level Securi
 
 5. **Host it.** With GitHub Pages: push the repo to GitHub, then go to **Settings → Pages**, set **Source** to *Deploy from a branch* and **Branch** to `main` / `(root)`, and save. After a minute the app is live at `https://<user>.github.io/<repo>/`. Share that link with the group.
 
-   You can also host it on Netlify or Cloudflare Pages, or anywhere else that serves a static file.
+6. **Host it on Cloudflare too (recommended).** Some networks (e.g. in Zimbabwe) block GitHub Pages. On Cloudflare, the page and the data come from one address, which works in more places:
+   1. In the Cloudflare dashboard, go to **Workers & Pages → Create application → Connect GitHub**, and pick this repo.
+   2. Keep the project name **`fines-app`** (it must match `wrangler.jsonc`), leave the build command empty, keep the deploy command `npx wrangler deploy`, and click **Deploy**.
+   3. The app goes live at `https://fines-app.<your-subdomain>.workers.dev`. Every push to `main` redeploys it automatically.
+
+   `worker/app.js` serves the page and forwards `/rest/v1/...` to Supabase. Files listed in `.assetsignore` (SQL, Worker code, README) aren't published.
+
+## Offline mode
+
+The app can be installed (browser menu → **Add to Home screen**) and works with weak or no signal:
+
+- It opens from a copy saved on the phone if the network doesn't answer within 3 seconds.
+- The leaderboard shows the last saved copy, marked "Offline · last updated …".
+- A fine submitted with no signal is saved on the phone and sent automatically once the phone is back online. The home screen shows how many are waiting. Its time is recorded when it reaches the server.
+- The Fine Master view always needs a connection, so private fines are never stored on a phone.
+
+`sw.js` (the service worker) keeps the saved copy. If you add a new file the app needs offline, add it to `SHELL` in `sw.js` and bump `CACHE`.
 
 ## Using it
 

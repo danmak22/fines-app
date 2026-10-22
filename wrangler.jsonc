@@ -1,0 +1,12 @@
+// Cloudflare Workers config. Cloudflare deploys this automatically
+// on every push to main once the repo is connected (see README).
+{
+  "name": "fines-app",
+  "main": "worker/app.js",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "not_found_handling": "none"
+  }
+}
