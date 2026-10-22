@@ -1,12 +1,12 @@
 -- Fines app: Supabase schema
 -- Run this whole file once in the Supabase SQL Editor.
--- Then set your Fine Master PIN (see the bottom of this file / README).
+-- Then set your Fine Master PIN (see README).
 
 create extension if not exists pgcrypto with schema extensions;
 
--- ---------------------------------------------------------------
+-- ----------------------------------------
 -- Tables
--- ---------------------------------------------------------------
+-- ----------------------------------------
 
 create table if not exists public.fines (
   id          bigint generated always as identity primary key,
@@ -34,10 +34,10 @@ create table if not exists public.settings (
   pin_hash text not null
 );
 
--- ---------------------------------------------------------------
+-- ----------------------------------------
 -- Row Level Security
--- Anonymous users may only INSERT into fines. Nothing else.
--- ---------------------------------------------------------------
+-- Anon users may only INSERT into fines.
+-- ----------------------------------------
 
 alter table public.fines          enable row level security;
 alter table public.archived_fines enable row level security;
@@ -51,10 +51,10 @@ create policy "anyone can submit a fine" on public.fines
   for insert to anon, authenticated
   with check (true);
 
--- ---------------------------------------------------------------
--- Name normalisation: trim, collapse spaces, lower-case.
--- Names are stored normalised and shown in Title Case via initcap().
--- ---------------------------------------------------------------
+-- ----------------------------------------
+-- Names: trimmed, single-spaced, lower-case.
+-- Shown in Title Case via initcap().
+-- ----------------------------------------
 
 create or replace function public.normalize_name(p text)
 returns text language sql immutable
@@ -63,7 +63,7 @@ as $$
   select lower(regexp_replace(btrim(coalesce(p, '')), '\s+', ' ', 'g'));
 $$;
 
--- Clean up every new fine and stop clients setting done/created_at themselves.
+-- Tidy each new fine before it is saved.
 create or replace function public.fines_before_insert()
 returns trigger language plpgsql
 set search_path = public
@@ -84,9 +84,9 @@ create trigger fines_before_insert
   before insert on public.fines
   for each row execute function public.fines_before_insert();
 
--- ---------------------------------------------------------------
+-- ----------------------------------------
 -- Public functions (no PIN)
--- ---------------------------------------------------------------
+-- ----------------------------------------
 
 -- Leaderboard: names + counts only.
 create or replace function public.get_leaderboard()
@@ -115,11 +115,11 @@ as $$
   order by 1;
 $$;
 
--- ---------------------------------------------------------------
+-- ----------------------------------------
 -- Fine Master functions (PIN required)
--- ---------------------------------------------------------------
+-- ----------------------------------------
 
--- Internal helper: raises an error unless the PIN matches the stored hash.
+-- Raises an error unless the PIN is correct.
 create or replace function public._require_pin(p_pin text)
 returns void
 language plpgsql stable security definer
@@ -176,7 +176,7 @@ begin
 end;
 $$;
 
--- Merge one name into another (e.g. "Jon" into "John"). Returns rows changed.
+-- Merge one name into another, e.g. Jon -> John.
 create or replace function public.fm_merge_names(p_pin text, p_from text, p_to text)
 returns int
 language plpgsql security definer
@@ -204,7 +204,7 @@ begin
 end;
 $$;
 
--- Archive all current fines and start a fresh session. Returns fines archived.
+-- Archive current fines, start a new session.
 create or replace function public.fm_close_session(p_pin text)
 returns int
 language plpgsql security definer
@@ -222,9 +222,9 @@ begin
 end;
 $$;
 
--- ---------------------------------------------------------------
+-- ----------------------------------------
 -- Function permissions
--- ---------------------------------------------------------------
+-- ----------------------------------------
 
 revoke all on function public._require_pin(text) from public, anon, authenticated;
 
@@ -237,11 +237,3 @@ grant execute on function
   public.fm_merge_names(text, text, text),
   public.fm_close_session(text)
 to anon, authenticated;
-
--- ---------------------------------------------------------------
--- Set the Fine Master PIN (run separately, with your own PIN):
---
---   insert into public.settings (id, pin_hash)
---   values (1, extensions.crypt('your-pin-here', extensions.gen_salt('bf')))
---   on conflict (id) do update set pin_hash = excluded.pin_hash;
--- ---------------------------------------------------------------
