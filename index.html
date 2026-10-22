@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffd23f">
+<title>Fines</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --yellow: #ffd23f;
+    --orange: #ff8c1a;
+    --pink: #ff3d7f;
+    --purple: #5b2a86;
+    --ink: #1d1029;
+    --paper: #fffaf0;
+    --green: #1fbf75;
+    --radius: 22px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 18px;
+    color: var(--ink);
+    background: var(--yellow);
+    min-height: 100vh;
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 20px 16px 120px; }
+  h1 { font-size: 2.4rem; margin: 8px 0 4px; letter-spacing: -1px; }
+  h2 { font-size: 1.5rem; margin: 28px 0 12px; }
+  .sub { margin: 0 0 20px; font-weight: 600; opacity: .75; }
+  [hidden] { display: none !important; }
+
+  button, .btn {
+    font: inherit; font-weight: 800; border: 0; cursor: pointer;
+    border-radius: var(--radius); padding: 16px 20px;
+    background: var(--ink); color: #fff;
+    box-shadow: 0 5px 0 rgba(0,0,0,.25);
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  button:disabled { opacity: .5; }
+  .big { display: block; width: 100%; font-size: 1.6rem; padding: 26px 20px; }
+  .pink { background: var(--pink); }
+  .orange { background: var(--orange); }
+  .green { background: var(--green); }
+  .ghost { background: #fff; color: var(--ink); }
+  .small { padding: 10px 14px; font-size: 1rem; }
+  .back { background: transparent; color: var(--ink); box-shadow: none; padding: 8px 0; font-size: 1.1rem; }
+
+  .card {
+    background: var(--paper); border-radius: var(--radius);
+    padding: 18px; margin-bottom: 14px;
+    box-shadow: 0 5px 0 rgba(0,0,0,.12);
+  }
+
+  label { display: block; font-weight: 800; margin: 18px 0 6px; }
+  input, textarea {
+    width: 100%; font: inherit; font-size: 1.15rem;
+    padding: 14px 16px; border-radius: 16px;
+    border: 3px solid var(--ink); background: #fff; color: var(--ink);
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--pink); }
+  textarea { min-height: 120px; resize: vertical; }
+
+  .suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .suggest button {
+    background: var(--pink); padding: 8px 14px; font-size: 1rem;
+    box-shadow: none; border-radius: 999px;
+  }
+
+  .board { list-style: none; padding: 0; margin: 0; }
+  .board li {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 4px; border-bottom: 2px dashed rgba(0,0,0,.12);
+    font-size: 1.2rem; font-weight: 700;
+  }
+  .board li:last-child { border-bottom: 0; }
+  .count {
+    background: var(--pink); color: #fff; min-width: 44px; text-align: center;
+    border-radius: 999px; padding: 4px 12px; font-weight: 900;
+  }
+  .empty { text-align: center; opacity: .6; padding: 10px 0; }
+
+  .success { text-align: center; padding: 30px 18px; }
+  .success .emoji { font-size: 4rem; }
+
+  .msg { font-weight: 700; margin-top: 12px; }
+  .error { color: #c0002e; }
+
+  .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+  .person h3 { margin: 0 0 8px; font-size: 1.4rem; display: flex; justify-content: space-between; }
+  .fine { padding: 12px 0; border-top: 2px dashed rgba(0,0,0,.12); }
+  .fine.done { opacity: .45; }
+  .fine .desc { font-size: 1.1rem; margin: 4px 0 8px; white-space: pre-wrap; }
+  .fine .meta { font-size: .9rem; opacity: .75; margin-bottom: 8px; }
+  .pill { display: inline-block; background: var(--orange); color: #fff; border-radius: 999px; padding: 2px 10px; font-weight: 800; font-size: .9rem; }
+
+  /* Read-out mode */
+  #readout {
+    position: fixed; inset: 0; background: var(--pink); color: #fff;
+    display: flex; flex-direction: column; padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    z-index: 10;
+  }
+  #readout .top { display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
+  #readout .body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  #ro-name { font-size: 2.8rem; font-weight: 900; margin: 0 0 16px; line-height: 1.1; }
+  #ro-desc { font-size: 1.9rem; font-weight: 700; line-height: 1.25; white-space: pre-wrap; }
+  #ro-by { font-size: 1.2rem; margin-top: 18px; opacity: .9; }
+  #ro-penalty { font-size: 1.6rem; margin-top: 18px; }
+  #ro-penalty span { background: var(--yellow); color: var(--ink); padding: 6px 16px; border-radius: 999px; font-weight: 900; }
+  #readout .nav { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  #readout .nav button { font-size: 1.2rem; padding: 20px 8px; }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- HOME -->
+  <section id="home">
+    <h1>🍻 Fines</h1>
+    <p class="sub">Dob someone in. Keep it secret.</p>
+    <button class="big pink" onclick="go('submit')">Submit a Fine</button>
+
+    <h2>Leaderboard</h2>
+    <div class="card">
+      <ul class="board" id="board"><li class="empty">Loading…</li></ul>
+    </div>
+    <button class="back" onclick="go('fm')">🔒 Fine Master</button>
+  </section>
+
+  <!-- SUBMIT -->
+  <section id="submit" hidden>
+    <button class="back" onclick="go('home')">← Back</button>
+    <h1>Submit a Fine</h1>
+
+    <form id="fine-form" autocomplete="off">
+      <label for="f-proposer">Your name</label>
+      <input id="f-proposer" maxlength="60" required>
+      <div class="suggest" id="s-proposer"></div>
+
+      <label for="f-fined">Who are you fining?</label>
+      <input id="f-fined" maxlength="60" required>
+      <div class="suggest" id="s-fined"></div>
+
+      <label for="f-desc">What did they do?</label>
+      <textarea id="f-desc" maxlength="1000" required></textarea>
+
+      <label for="f-penalty">Penalty</label>
+      <input id="f-penalty" maxlength="60" value="1 shooter" required>
+
+      <p class="msg error" id="submit-error"></p>
+      <button class="big orange" type="submit" id="submit-btn">Submit Fine 🚨</button>
+    </form>
+
+    <div class="card success" id="submit-done" hidden>
+      <div class="emoji">✅</div>
+      <h2>Fine submitted!</h2>
+      <p>The Fine Master will deal with it.</p>
+      <button class="big pink" onclick="resetForm()">Submit another</button>
+      <br>
+      <button class="big ghost" onclick="go('home')">Back to home</button>
+    </div>
+  </section>
+
+  <!-- FINE MASTER LOGIN -->
+  <section id="fm-login" hidden>
+    <button class="back" onclick="go('home')">← Back</button>
+    <h1>Fine Master</h1>
+    <form id="pin-form" class="card">
+      <label for="pin">PIN</label>
+      <input id="pin" type="password" autocomplete="current-password" required>
+      <p class="msg error" id="pin-error"></p>
+      <button class="big pink" type="submit">Unlock</button>
+    </form>
+  </section>
+
+  <!-- FINE MASTER -->
+  <section id="fm" hidden>
+    <button class="back" onclick="go('home')">← Home</button>
+    <h1>Fine Master</h1>
+    <p class="sub" id="fm-summary"></p>
+
+    <div class="toolbar">
+      <button class="pink" onclick="startReadout()">📣 Read out</button>
+      <button class="ghost" onclick="loadFines()">↻ Refresh</button>
+    </div>
+
+    <div id="fm-list"></div>
+
+    <h2>Merge names</h2>
+    <form class="card" id="merge-form" autocomplete="off">
+      <label for="m-from">Merge this name…</label>
+      <input id="m-from" required>
+      <div class="suggest" id="s-from"></div>
+      <label for="m-to">…into this name</label>
+      <input id="m-to" required>
+      <div class="suggest" id="s-to"></div>
+      <p class="msg" id="merge-msg"></p>
+      <button class="big orange" type="submit">Merge</button>
+    </form>
+
+    <h2>End of session</h2>
+    <div class="card">
+      <p>Archives all current fines and resets the leaderboard.</p>
+      <button class="big" onclick="closeSession()">Close session</button>
+    </div>
+
+    <button class="back" onclick="logout()">Log out</button>
+  </section>
+</main>
+
+<!-- READ-OUT OVERLAY -->
+<div id="readout" hidden>
+  <div class="top">
+    <span id="ro-pos"></span>
+    <button class="small ghost" onclick="stopReadout()">✕ Close</button>
+  </div>
+  <div class="body">
+    <p id="ro-name"></p>
+    <div id="ro-desc"></div>
+    <div id="ro-by"></div>
+    <div id="ro-penalty"><span></span></div>
+  </div>
+  <div class="nav">
+    <button class="ghost" onclick="stepReadout(-1)">‹ Prev</button>
+    <button class="green" id="ro-done" onclick="toggleReadoutDone()">Done</button>
+    <button class="ghost" onclick="stepReadout(1)">Next ›</button>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG: paste your Supabase project details here =====
+const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+// ============================================================
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = (id) => document.getElementById(id);
+
+let names = [];       // known names for suggestions
+let pin = sessionStorage.getItem('fm-pin') || '';
+let fines = [];       // Fine Master view
+let readout = [];     // fines being read out
+let roIndex = 0;
+
+// ---------- Helpers ----------
+const normalize = (s) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+const titleCase = (s) => normalize(s).replace(/(^|[\s'-])\S/g, (c) => c.toUpperCase());
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtTime = (t) => new Date(t).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+
+// ---------- Routing ----------
+function go(screen) { location.hash = screen; }
+
+function route() {
+  let screen = location.hash.slice(1) || 'home';
+  if (screen === 'fm' && !pin) screen = 'fm-login';
+  for (const id of ['home', 'submit', 'fm-login', 'fm']) $(id).hidden = id !== screen;
+  window.scrollTo(0, 0);
+
+  if (screen === 'home') loadLeaderboard();
+  if (screen === 'submit') loadNames();
+  if (screen === 'fm') { loadFines(); loadNames(); }
+  if (screen === 'fm-login') $('pin').focus();
+}
+window.addEventListener('hashchange', route);
+
+// ---------- Leaderboard ----------
+async function loadLeaderboard() {
+  const { data, error } = await db.rpc('get_leaderboard');
+  const board = $('board');
+  if (error) { board.innerHTML = '<li class="empty">Could not load leaderboard</li>'; return; }
+  if (!data.length) { board.innerHTML = '<li class="empty">No fines yet. Get dobbing!</li>'; return; }
+  board.innerHTML = data.map((r) =>
+    `<li><span>${esc(r.name)}</span><span class="count">${r.fine_count}</span></li>`).join('');
+}
+
+// ---------- Name suggestions ----------
+async function loadNames() {
+  const { data } = await db.rpc('get_names');
+  if (data) names = data.map((r) => r.name);
+}
+
+function attachSuggest(inputId, boxId) {
+  const input = $(inputId), box = $(boxId);
+  const render = () => {
+    const q = normalize(input.value);
+    if (!q) { box.innerHTML = ''; return; }
+    const starts = names.filter((n) => normalize(n).startsWith(q));
+    const contains = names.filter((n) => !normalize(n).startsWith(q) && normalize(n).includes(q));
+    const matches = [...starts, ...contains].filter((n) => normalize(n) !== q).slice(0, 5);
+    box.innerHTML = matches.map((n) => `<button type="button">${esc(n)}</button>`).join('');
+  };
+  input.addEventListener('input', render);
+  input.addEventListener('blur', () => setTimeout(() => (box.innerHTML = ''), 200));
+  box.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON') return;
+    input.value = e.target.textContent;
+    box.innerHTML = '';
+  });
+}
+attachSuggest('f-proposer', 's-proposer');
+attachSuggest('f-fined', 's-fined');
+attachSuggest('m-from', 's-from');
+attachSuggest('m-to', 's-to');
+
+// ---------- Submit a fine ----------
+$('fine-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fine = {
+    proposer: normalize($('f-proposer').value),
+    fined: normalize($('f-fined').value),
+    description: $('f-desc').value.trim(),
+    penalty: $('f-penalty').value.trim() || '1 shooter',
+  };
+  if (!fine.proposer || !fine.fined || !fine.description) {
+    $('submit-error').textContent = 'Please fill in every field.';
+    return;
+  }
+  $('submit-btn').disabled = true;
+  $('submit-error').textContent = '';
+  const { error } = await db.from('fines').insert(fine);
+  $('submit-btn').disabled = false;
+  if (error) { $('submit-error').textContent = 'Could not submit. Try again.'; return; }
+
+  localStorage.setItem('my-name', fine.proposer);
+  $('fine-form').hidden = true;
+  $('submit-done').hidden = false;
+});
+
+function resetForm() {
+  $('fine-form').reset();
+  $('f-proposer').value = titleCase(localStorage.getItem('my-name') || '');
+  $('fine-form').hidden = false;
+  $('submit-done').hidden = true;
+  loadNames();
+  window.scrollTo(0, 0);
+}
+
+// ---------- Fine Master ----------
+$('pin-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const tryPin = $('pin').value;
+  const { error } = await db.rpc('fm_check_pin', { p_pin: tryPin });
+  if (error) { $('pin-error').textContent = 'Wrong PIN.'; return; }
+  pin = tryPin;
+  sessionStorage.setItem('fm-pin', pin);
+  $('pin').value = '';
+  $('pin-error').textContent = '';
+  route();
+});
+
+function logout() {
+  pin = '';
+  sessionStorage.removeItem('fm-pin');
+  go('home');
+}
+
+// Run a PIN-protected RPC; log out if the PIN is rejected.
+async function fmCall(fn, args = {}) {
+  const { data, error } = await db.rpc(fn, { p_pin: pin, ...args });
+  if (error && error.message.includes('Wrong PIN')) { logout(); }
+  return { data, error };
+}
+
+async function loadFines() {
+  const { data, error } = await fmCall('fm_get_fines');
+  if (error) { $('fm-list').innerHTML = `<p class="error">${esc(error.message)}</p>`; return; }
+  fines = data;
+  renderFines();
+}
+
+function renderFines() {
+  const left = fines.filter((f) => !f.done).length;
+  $('fm-summary').textContent = `${fines.length} fines · ${left} still to read`;
+  if (!fines.length) { $('fm-list').innerHTML = '<div class="card empty">No fines this session.</div>'; return; }
+
+  const groups = {};
+  for (const f of fines) (groups[f.fined] ||= []).push(f);
+
+  $('fm-list').innerHTML = Object.entries(groups).map(([person, list]) => `
+    <div class="card person">
+      <h3><span>${esc(person)}</span><span class="count">${list.length}</span></h3>
+      ${list.map((f) => `
+        <div class="fine ${f.done ? 'done' : ''}">
+          <div class="desc">${esc(f.description)}</div>
+          <div class="meta">by ${esc(f.proposer)} · ${fmtTime(f.created_at)} · <span class="pill">${esc(f.penalty)}</span></div>
+          <button class="small ${f.done ? 'ghost' : 'green'}" onclick="setDone(${f.id}, ${!f.done})">
+            ${f.done ? 'Undo' : 'Mark done'}
+          </button>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+async function setDone(id, done) {
+  const { error } = await fmCall('fm_set_done', { p_id: id, p_done: done });
+  if (error) { alert(error.message); return; }
+  const f = fines.find((x) => x.id === id);
+  if (f) f.done = done;
+  renderFines();
+}
+
+$('merge-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const from = $('m-from').value, to = $('m-to').value;
+  if (!confirm(`Merge "${titleCase(from)}" into "${titleCase(to)}"?`)) return;
+  const { data, error } = await fmCall('fm_merge_names', { p_from: from, p_to: to });
+  const msg = $('merge-msg');
+  msg.className = 'msg' + (error ? ' error' : '');
+  msg.textContent = error ? error.message : `Merged. ${data} fine(s) updated.`;
+  if (!error) { $('merge-form').reset(); loadFines(); loadNames(); }
+});
+
+async function closeSession() {
+  if (!confirm('Close this session? All current fines will be archived and the leaderboard reset.')) return;
+  const { data, error } = await fmCall('fm_close_session');
+  if (error) { alert(error.message); return; }
+  alert(`Session closed. ${data} fine(s) archived.`);
+  loadFines();
+}
+
+// ---------- Read-out mode ----------
+function startReadout() {
+  readout = fines.filter((f) => !f.done);
+  if (!readout.length) readout = fines.slice();
+  if (!readout.length) { alert('No fines to read out.'); return; }
+  roIndex = 0;
+  $('readout').hidden = false;
+  showReadout();
+}
+
+function showReadout() {
+  const f = readout[roIndex];
+  $('ro-pos').textContent = `${roIndex + 1} / ${readout.length}`;
+  $('ro-name').textContent = f.fined;
+  $('ro-desc').textContent = f.description;
+  $('ro-by').textContent = `Proposed by ${f.proposer}`;
+  $('ro-penalty').firstElementChild.textContent = f.penalty;
+  $('ro-done').textContent = f.done ? '✓ Done' : 'Done';
+  $('ro-done').className = f.done ? 'ghost' : 'green';
+}
+
+function stepReadout(dir) {
+  roIndex = Math.min(readout.length - 1, Math.max(0, roIndex + dir));
+  showReadout();
+}
+
+async function toggleReadoutDone() {
+  const f = readout[roIndex];
+  await setDone(f.id, !f.done);
+  showReadout();
+}
+
+function stopReadout() {
+  $('readout').hidden = true;
+  renderFines();
+}
+
+// ---------- Start ----------
+$('f-proposer').value = titleCase(localStorage.getItem('my-name') || '');
+route();
+</script>
+</body>
+</html>
