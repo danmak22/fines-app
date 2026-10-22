@@ -8,5 +8,9 @@
     "directory": ".",
     "binding": "ASSETS",
     "not_found_handling": "none"
+  },
+  // Supabase keep-alive (worker/app.js "scheduled"): 09:00 UTC every 2 days.
+  "triggers": {
+    "crons": ["0 9 */2 * *"]
   }
 }

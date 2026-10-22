@@ -48,7 +48,7 @@ Fine details are private. That is enforced in the database with Row Level Securi
    2. Keep the project name **`gym-fines`** (it must match `wrangler.jsonc`), leave the build command empty, keep the deploy command `npx wrangler deploy`, and click **Deploy**.
    3. The app goes live at `https://gym-fines.<your-subdomain>.workers.dev`. Every push to `main` redeploys it automatically.
 
-   `worker/app.js` serves the page and forwards `/rest/v1/...` to Supabase. Files listed in `.assetsignore` (SQL, Worker code, README) aren't published.
+   `worker/app.js` serves the page and forwards `/rest/v1/...` to Supabase. It also pings Supabase every 2 days (the `triggers` cron in `wrangler.jsonc`) so the free project isn't paused for inactivity. Runs show under the Worker's **Observability** / **Logs** in Cloudflare. Files listed in `.assetsignore` (SQL, Worker code, README) aren't published.
 
 ## Offline mode
 
