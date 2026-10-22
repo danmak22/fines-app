@@ -87,6 +87,7 @@
   .success .emoji { font-size: 4rem; }
 
   .msg { font-weight: 700; margin-top: 12px; }
+  .hint { margin: 8px 0 0; font-size: .95rem; font-weight: 600; opacity: .75; }
   .error { color: #c0002e; }
 
   .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
@@ -139,6 +140,7 @@
       <label for="f-proposer">Your name</label>
       <input id="f-proposer" maxlength="60" required>
       <div class="suggest" id="s-proposer"></div>
+      <p class="hint">🔒 Your name stays anonymous. Only the Fine Master can see who sent a fine.</p>
 
       <label for="f-fined">Who are you fining?</label>
       <input id="f-fined" maxlength="60" required>
