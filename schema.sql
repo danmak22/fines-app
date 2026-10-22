@@ -214,10 +214,17 @@ declare
   v_count int;
 begin
   perform _require_pin(p_pin);
-  insert into archived_fines (id, proposer, fined, description, penalty, done, created_at)
-    select id, proposer, fined, description, penalty, done, created_at from fines;
+  -- Supabase blocks DELETE without WHERE, hence "where true".
+  with moved as (
+    delete from fines where true
+    returning id, proposer, fined, description,
+              penalty, done, created_at
+  )
+  insert into archived_fines
+    (id, proposer, fined, description,
+     penalty, done, created_at)
+  select * from moved;
   get diagnostics v_count = row_count;
-  delete from fines;
   return v_count;
 end;
 $$;
