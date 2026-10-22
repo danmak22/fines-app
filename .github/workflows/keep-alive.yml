@@ -1,0 +1,30 @@
+# Pings Supabase so the free-tier project isn't paused for inactivity.
+# Read-only: calls get_leaderboard(), which only returns names + counts.
+name: Keep Supabase alive
+
+on:
+  schedule:
+    - cron: "0 9 */2 * *"   # 09:00 UTC every 2 days
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    env:
+      # Same public values as in index.html.
+      SUPABASE_URL: https://axjmiczdhpwzjocrmkdy.supabase.co
+      SUPABASE_ANON_KEY: sb_publishable_HdX5meaO2HuWt4bnMgLcYg_dQy3c4m7
+    steps:
+      - name: Call get_leaderboard()
+        run: |
+          status=$(curl -s -o response.json -w "%{http_code}" \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/get_leaderboard" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "HTTP status: $status"
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            cat response.json
+            exit 1
+          fi
