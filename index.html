@@ -56,12 +56,13 @@
   }
 
   label { display: block; font-weight: 800; margin: 18px 0 6px; }
-  input, textarea {
+  input, textarea, select {
     width: 100%; font: inherit; font-size: 1.15rem;
     padding: 14px 16px; border-radius: 16px;
     border: 3px solid var(--ink); background: #fff; color: var(--ink);
   }
-  input:focus, textarea:focus { outline: none; border-color: var(--pink); }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--pink); }
+  #f-penalty-other { margin-top: 10px; }
   textarea { min-height: 120px; resize: vertical; }
 
   .suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
@@ -150,7 +151,15 @@
       <textarea id="f-desc" maxlength="1000" required></textarea>
 
       <label for="f-penalty">Penalty</label>
-      <input id="f-penalty" maxlength="60" value="1 shooter" required>
+      <select id="f-penalty">
+        <option selected>1 shooter</option>
+        <option>2 shooters</option>
+        <option>3 shooters</option>
+        <option>Down-down</option>
+        <option>Half a drink</option>
+        <option value="other">Other…</option>
+      </select>
+      <input id="f-penalty-other" maxlength="60" placeholder="Type the penalty" hidden>
 
       <p class="msg error" id="submit-error"></p>
       <button class="big orange" type="submit" id="submit-btn">Submit Fine 🚨</button>
@@ -310,13 +319,22 @@ attachSuggest('m-from', 's-from');
 attachSuggest('m-to', 's-to');
 
 // ---------- Submit a fine ----------
+// Show a text box when "Other…" is picked as the penalty.
+function syncPenalty() {
+  const other = $('f-penalty').value === 'other';
+  $('f-penalty-other').hidden = !other;
+  if (other) $('f-penalty-other').focus();
+}
+$('f-penalty').addEventListener('change', syncPenalty);
+
 $('fine-form').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const penalty = $('f-penalty').value === 'other' ? $('f-penalty-other').value.trim() : $('f-penalty').value;
   const fine = {
     proposer: normalize($('f-proposer').value),
     fined: normalize($('f-fined').value),
     description: $('f-desc').value.trim(),
-    penalty: $('f-penalty').value.trim() || '1 shooter',
+    penalty: penalty || '1 shooter',
   };
   if (!fine.proposer || !fine.fined || !fine.description) {
     $('submit-error').textContent = 'Please fill in every field.';
@@ -335,6 +353,7 @@ $('fine-form').addEventListener('submit', async (e) => {
 
 function resetForm() {
   $('fine-form').reset();
+  $('f-penalty-other').hidden = true;
   $('f-proposer').value = titleCase(localStorage.getItem('my-name') || '');
   $('fine-form').hidden = false;
   $('submit-done').hidden = true;
