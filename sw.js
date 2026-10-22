@@ -1,7 +1,7 @@
 // Service worker: keeps a copy of the app on the phone so it opens
 // with no signal. Data calls (/rest/...) are never cached here.
 
-const CACHE = 'fines-shell-v4';
+const CACHE = 'fines-shell-v5';
 const SHELL = [
   './',
   'index.html',
@@ -10,6 +10,8 @@ const SHELL = [
   'icons/icon-180.png',
   'icons/icon-192.png',
   'icons/icon-512.png',
+  'img/migym-logo.png',
+  'img/gym.jpg',
 ];
 const shellUrls = SHELL.map((p) => new URL(p, self.location).href);
 

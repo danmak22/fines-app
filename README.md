@@ -12,6 +12,7 @@ Fine details are private. That is enforced in the database with Row Level Securi
 - `index.html` is the whole app (HTML/CSS/vanilla JS + supabase-js from a CDN).
 - `schema.sql` holds the tables, RLS policies and functions.
 - `sw.js`, `manifest.webmanifest`, `icons/` make the app installable and usable offline.
+- `img/` holds the MiGym logo and gym photo used in the home-screen header.
 - `vendor/supabase.js` is supabase-js 2.45.4, served from the repo instead of a CDN.
 - `worker/app.js` + `wrangler.jsonc` host the whole app on Cloudflare.
 - `worker/supabase-proxy.js` is the `fines-proxy` Worker the GitHub Pages copy uses to reach Supabase.
