@@ -244,3 +244,31 @@ grant execute on function
   public.fm_merge_names(text, text, text),
   public.fm_close_session(text)
 to anon, authenticated;
+
+-- ----------------------------------------
+-- Past sessions (Fine Master only)
+-- ----------------------------------------
+
+create or replace function public.fm_get_archived(p_pin text)
+returns table (
+  id bigint, proposer text, fined text,
+  description text, penalty text,
+  created_at timestamptz, archived_at timestamptz
+)
+language plpgsql stable security definer
+set search_path = public
+as $$
+begin
+  perform _require_pin(p_pin);
+  return query
+    select a.id, initcap(a.proposer),
+           initcap(a.fined), a.description,
+           a.penalty, a.created_at, a.archived_at
+    from archived_fines a
+    order by a.archived_at desc, a.fined,
+             a.created_at;
+end;
+$$;
+
+grant execute on function public.fm_get_archived(text)
+to anon, authenticated;

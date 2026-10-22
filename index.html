@@ -97,6 +97,8 @@
   .fine.done { opacity: .45; }
   .fine .desc { font-size: 1.1rem; margin: 4px 0 8px; white-space: pre-wrap; }
   .fine .meta { font-size: .9rem; opacity: .75; margin-bottom: 8px; }
+  .past summary { font-size: 1.2rem; font-weight: 800; cursor: pointer; padding: 4px 0; }
+  .past h3 { margin: 16px 0 4px; font-size: 1.3rem; display: flex; justify-content: space-between; }
   .pill { display: inline-block; background: var(--orange); color: #fff; border-radius: 999px; padding: 2px 10px; font-weight: 800; font-size: .9rem; }
 
   /* Read-out mode */
@@ -216,6 +218,11 @@
     <div class="card">
       <p>Archives all current fines and resets the leaderboard.</p>
       <button class="big" onclick="closeSession()">Close session</button>
+    </div>
+
+    <h2>Past sessions</h2>
+    <div id="past-list">
+      <button class="big ghost" onclick="loadPast()">Show past sessions</button>
     </div>
 
     <button class="back" onclick="logout()">Log out</button>
@@ -441,6 +448,38 @@ async function closeSession() {
   if (error) { alert(error.message); return; }
   alert(`Session closed. ${data} fine(s) archived.`);
   loadFines();
+  if (pastShown) loadPast();
+}
+
+// ---------- Past sessions ----------
+let pastShown = false;
+
+async function loadPast() {
+  const { data, error } = await fmCall('fm_get_archived');
+  if (error) { $('past-list').innerHTML = `<p class="error">${esc(error.message)}</p>`; return; }
+  pastShown = true;
+  if (!data.length) { $('past-list').innerHTML = '<div class="card empty">No past sessions yet.</div>'; return; }
+
+  // Fines closed together share the same archived_at time.
+  const sessions = {};
+  for (const f of data) (sessions[f.archived_at] ||= []).push(f);
+
+  $('past-list').innerHTML = Object.entries(sessions).map(([closedAt, list]) => {
+    const people = {};
+    for (const f of list) (people[f.fined] ||= []).push(f);
+    const when = new Date(closedAt).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return `
+      <details class="card past">
+        <summary>${when} · ${list.length} fine${list.length === 1 ? '' : 's'}</summary>
+        ${Object.entries(people).map(([person, fs]) => `
+          <h3><span>${esc(person)}</span><span class="count">${fs.length}</span></h3>
+          ${fs.map((f) => `
+            <div class="fine">
+              <div class="desc">${esc(f.description)}</div>
+              <div class="meta">by ${esc(f.proposer)} · ${fmtTime(f.created_at)} · <span class="pill">${esc(f.penalty)}</span></div>
+            </div>`).join('')}`).join('')}
+      </details>`;
+  }).join('');
 }
 
 // ---------- Read-out mode ----------
