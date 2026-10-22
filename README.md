@@ -45,8 +45,8 @@ Fine details are private. That is enforced in the database with Row Level Securi
 
 6. **Host it on Cloudflare too (recommended).** Some networks (e.g. in Zimbabwe) block GitHub Pages. On Cloudflare, the page and the data come from one address, which works in more places:
    1. In the Cloudflare dashboard, go to **Workers & Pages → Create application → Connect GitHub**, and pick this repo.
-   2. Keep the project name **`fines-app`** (it must match `wrangler.jsonc`), leave the build command empty, keep the deploy command `npx wrangler deploy`, and click **Deploy**.
-   3. The app goes live at `https://fines-app.<your-subdomain>.workers.dev`. Every push to `main` redeploys it automatically.
+   2. Keep the project name **`gym-fines`** (it must match `wrangler.jsonc`), leave the build command empty, keep the deploy command `npx wrangler deploy`, and click **Deploy**.
+   3. The app goes live at `https://gym-fines.<your-subdomain>.workers.dev`. Every push to `main` redeploys it automatically.
 
    `worker/app.js` serves the page and forwards `/rest/v1/...` to Supabase. Files listed in `.assetsignore` (SQL, Worker code, README) aren't published.
 

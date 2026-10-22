@@ -1,7 +1,7 @@
 // Cloudflare Workers config. Cloudflare deploys this automatically
 // on every push to main once the repo is connected (see README).
 {
-  "name": "fines-app",
+  "name": "gym-fines",
   "main": "worker/app.js",
   "compatibility_date": "2025-09-01",
   "assets": {
