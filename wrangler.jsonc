@@ -9,6 +9,10 @@
     "binding": "ASSETS",
     "not_found_handling": "none"
   },
+  // Logs in the dashboard's Observability tab (incl. "Supabase keep-alive: HTTP 200").
+  "observability": {
+    "enabled": true
+  },
   // Supabase keep-alive (worker/app.js "scheduled"): 09:00 UTC every 2 days.
   "triggers": {
     "crons": ["0 9 */2 * *"]
